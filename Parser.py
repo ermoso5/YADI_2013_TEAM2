@@ -4,11 +4,11 @@ class DatalogParser:
     def __init__(self, input):
         self.datalogString = input # V(X,Y) :- R(X,Z), Q(x,'20').?- V(X,Y).
 
-    def GetRules(self):
-        #program_rule = OneOrMore(Word(printables) + Literal(".").suppress()) + StringEnd()
-        #statements = program_rule.parseString(self.datalogString)
-        rules = []
-        statements = self.datalogString.split(".") #rules and query
+    def getStatements(self):
+        return self.datalogString.split(".") #rules and query
+        
+    def GetQuery(self):
+        statements = self.getStatements() #rules and query
         statement_number = len(statements)
         try:
             query = statements[statement_number - 2]
@@ -22,6 +22,14 @@ class DatalogParser:
         except ParseException:
             print("No query specified")
             return
+        return self.toPredicate(query_breakdown)
+        
+    def GetRules(self):
+        #program_rule = OneOrMore(Word(printables) + Literal(".").suppress()) + StringEnd()
+        #statements = program_rule.parseString(self.datalogString)
+        rules = []
+        statements = self.getStatements() #rules and query
+        statement_number = len(statements)
 
         try:
             for i in range(0, statement_number-2, 1):
@@ -56,10 +64,12 @@ class DatalogParser:
         
         return rule
             
-    def print_me(self):
-        return self.datalogString
-
-
+    def Print(self):
+        for i in self.GetRules():
+            print()
+            i.print()
+        
+    
 class Slot:
     def __init__(self, arg):
         self.VariableName = self.Value = ""
@@ -69,23 +79,29 @@ class Slot:
         except ParseException:          
             self.VariableName = arg
     def print(self):
-        print(self.Value | self.VariableName)
+        print(self.Value + self.VariableName, end="")
 
 class Predicate:
     def __init__(self):
         self.Name = ""
         self.Slots = []
     def print(self):
-        print(self.Name+'(')
+        print(self.Name+'(', end="")
         for p in self.Slots:
-            print(p.Value + ',' + p.VariableName)
-        print(')')
+            print(p.Value + ',' + p.VariableName, end="")
+        print(')', end="")
 
 class Rule:
     def _init__(self):
         self.Head = Predicate()
         self.Body = []
-
+    def print(self):
+        print("Head:", end="")
+        self.Head.print()
+        print("Body:", end="")
+        for i in range(0,len(self.Body), 1):
+            self.Body[i].print()
+            
 class Grammar:
         def __init__(self):
             operator = Word("+-*/=<><=>=!=")
@@ -117,5 +133,8 @@ class Grammar:
 
         def constantRule(self):
             return self.constant_rule
+
+    
+
 
     
