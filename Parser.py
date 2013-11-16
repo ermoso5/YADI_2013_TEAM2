@@ -1,11 +1,10 @@
 from pyparsing import *
 
 class DatalogParser:
-    def __init__(self, input):
-        self.datalogString = input # V(X,Y) :- R(X,Z), Q(x,'20').?- V(X,Y).
+    def __init__(self, input_file):
+        self.rules_file = input_file 
 
-    def getStatements(self):
-        return self.datalogString.split(".") #rules and query
+    ##############  API ########################
         
     def GetQuery(self):
         statements = self.getStatements() #rules and query
@@ -28,16 +27,28 @@ class DatalogParser:
         #program_rule = OneOrMore(Word(printables) + Literal(".").suppress()) + StringEnd()
         #statements = program_rule.parseString(self.datalogString)
         rules = []
-        statements = self.getStatements() #rules and query
-        statement_number = len(statements)
 
         try:
-            for i in range(0, statement_number-2, 1):
-                new_rule = self.toRule(statements[i])
+            for i in self.getStatements():
+                try:
+                    Grammar().predicateRule().parseString(i)
+                    new_rule = self.toFact(i)
+                except ParseException:
+                    new_rule = self.toRule(i)
                 rules.append(new_rule)
         except ParseException:
             print("The rules were not valid.")
         return rules
+
+    def Print(self):
+        for i in self.GetRules():
+            print()
+            i.print()
+
+    ############# PRIVATE FUNCTIONS #####################
+
+    def getStatements(self):
+        return open(self.rules_file).read().splitlines()
         
     def toPredicate(self, input_break):
         #input_break - [Name, [P1, P2, ..., PN]]
@@ -63,12 +74,16 @@ class DatalogParser:
             rule.Body.append(self.toPredicate(statement_breakdown[2][i]))
         
         return rule
-            
-    def Print(self):
-        for i in self.GetRules():
-            print()
-            i.print()
+    
+    def toFact(self, input_break):
+        fact = Fact()
+        fact.Name = input_break[0]
+        fact.Slots = []
         
+        for i in range(1, len(input_break), 1):
+            slot = Slot(input_break[i])
+            fact.Slots.append(slot)  
+        return fact
     
 class Slot:
     def __init__(self, arg):
@@ -101,7 +116,9 @@ class Rule:
         print("Body:", end="")
         for i in range(0,len(self.Body), 1):
             self.Body[i].print()
-            
+
+class Fact(Predicate): pass
+
 class Grammar:
         def __init__(self):
             operator = Word("+-*/=<><=>=!=")
@@ -116,13 +133,13 @@ class Grammar:
 
             param = variable | constant
             param_list = delimitedList(Optional(quotedString.copy() | param, default=""),delim=',' ).setName("paramList")
-            predicate_rule =  predicate_name + Literal("(").suppress() + param_list + Literal(")").suppress()
+            predicate_rule = predicate_name + Literal("(").suppress() + param_list + Literal(")").suppress()
                     
             head_param_list = delimitedList(Optional(quotedString.copy() | variable, default=""),delim=',' ).setName("paramList")
             head_rule = predicate_name + Literal("(").suppress() + head_param_list + Literal(")").suppress()
 
             predicate_list = delimitedList(Optional(quotedString.copy() | Group(predicate_rule), default=""),delim=',' ).setName("predicateList")
-            self.statement_rule = Group(head_rule) + ":-" + Group(predicate_list)
+            self.statement_rule = (Group(head_rule) + ":-" + Group(predicate_list)) | predicate_rule
             self.predicate_rule = predicate_rule
             self.constant_rule = constant
         def statementRule(self):
