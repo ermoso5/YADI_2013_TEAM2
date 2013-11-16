@@ -22,8 +22,9 @@ Pred=Predicate("Fact1",[slot("ABC",""),slot("123",""),slot("555","") ])
 
 class Database:
     def createTable(self,Pred):
-        str="create table ("
+        str="create table "
         str+= Pred.name
+        str+="("
         c=0
         for i in Pred.slot:
             str+= "col"+c.__str__+"  varchar ,"
