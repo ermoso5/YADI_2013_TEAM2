@@ -28,7 +28,6 @@ rule_loader = Button(definition_mode, text="Select your file", command=load_rule
 rule_loader.pack(side=LEFT)
 definition_mode.pack(side=LEFT, fill=X)
    
-master.mainloop()
 
 rules_text = Message(definition_mode)
 query_text = Message(definition_mode)
@@ -38,3 +37,5 @@ execute_query.pack(side=RIGHT)
 definition_mode.pack(side=RIGHT, fill=X)
 
 results_text = Message(definition_mode,)
+
+master.mainloop()
