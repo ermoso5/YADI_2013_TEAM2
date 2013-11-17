@@ -1,4 +1,3 @@
-
 import psycopg2 as dbapi2
 from sqlalchemy import *
 
@@ -43,7 +42,7 @@ class operation:
 
 
 class Database:
-    #engine = create_engine('postgresql://postgres:'+"a111111b"+'@localhost:5432/' +"TinyTwitter"+'') 
+    
     engine = dbapi2.connect (database="datalog", user="postgres", password="dmkm")
     def createTable(self,Pred):
         cur =self.engine.cursor()
