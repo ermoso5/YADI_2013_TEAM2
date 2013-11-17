@@ -96,7 +96,7 @@ class DatalogParser:
     
     def toFact(self, input):
         input_break = Grammar().factRule().parseString(input)
-        fact = Fact()
+        fact = Predicate()
         print(input_break)
         if input_break[0] == 'not':
             param_index = 2
@@ -148,8 +148,6 @@ class Rule:
         print("Body:", end="")
         for i in range(0,len(self.Body), 1):
             self.Body[i].print()
-
-class Fact(Predicate): pass
 
 class Grammar:
         def __init__(self):
