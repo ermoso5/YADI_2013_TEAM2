@@ -1,4 +1,9 @@
+import psycopg2 as dbapi2
+from sqlalchemy import *
+from sqlalchemy.engine import reflection
+import sys
 from pyparsing import *
+from MainPKG.Basic_Classes import *
 
 class DatalogParser:
     def __init__(self, input_file):
