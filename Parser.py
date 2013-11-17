@@ -5,22 +5,18 @@ class DatalogParser:
         self.rules_file = input_file 
 
     ##############  API ########################
+
+    def SetQuery(self, query):
+        self.query = query
         
-    def GetQuery(self):
-        statements = self.getStatements() #rules and query
-        statement_number = len(statements)
-        try:
-            query = statements[statement_number - 2]
-        except IndexError:
-            print("Input is not valid")
-            return
-        
+    def GetQuery(self):      
         query_rule = Literal("?-").suppress() + Grammar().predicateRule()
         try:
-            query_breakdown = query_rule.parseString(query)
+            query_breakdown = query_rule.parseString(self.query)
         except ParseException:
             print("No query specified")
             return
+        
         return self.toPredicate(query_breakdown)
         
     def GetRules(self):
