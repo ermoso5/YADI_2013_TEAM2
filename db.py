@@ -81,8 +81,10 @@ db.echo = False  # if we want to see the SQL we're creating, the value should be
 
 metadata = MetaData(db)
 
-    
+metadata.reflect(db)   
 tbl = metadata.tables.keys()
+for i in tbl:
+    print(i)
 
 def insertRow(self,tbl):
     quer="INSERT INTO ("
@@ -99,8 +101,9 @@ def insertRow(self,tbl):
     quer+=") ) VALUES ("
     k=0
     for k in Pred.slot:
-        quer +=Pred.slot(c).Value
+        quer +=Pred.Slots[c].Value
         c+=1
     quer +="))"
     cur.execute (quer)
         db.commit()
+    
