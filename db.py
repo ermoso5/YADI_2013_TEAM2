@@ -73,5 +73,34 @@ class Database:
     ##print(que)
 cur.execute (str)
 db.commit()
+from sqlalchemy import *
 
-def insertRow(self,Pred):
+db = create_engine('postgresql://postgres:dmkm@localhost:5432/datalog') # I create a database named Datalog and the code is dmkm in postgreSQL
+
+db.echo = False  # if we want to see the SQL we're creating, the value should be True
+
+metadata = MetaData(db)
+
+    
+tbl = metadata.tables.keys()
+
+def insertRow(self,tbl):
+    quer="INSERT INTO ("
+    opera1=operation()                
+    col=""
+    ii=0  
+    for ii in   tbl:     
+        col+= opera1.get_Column_name(tlb.name,ii))
+        col+=","
+        quer+=col
+        col=""
+        ii+=1
+    quer=quer[:-1]   ## remove the last comma    
+    quer+=") ) VALUES ("
+    k=0
+    for k in Pred.slot:
+        quer +=Pred.slot(c).Value
+        c+=1
+    quer +="))"
+    cur.execute (quer)
+        db.commit()
