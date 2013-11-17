@@ -119,32 +119,6 @@ class Slot:
     def print(self):
         print(self.Value + self.VariableName, end="")
 
-class Predicate:
-    def __init__(self):
-        self.Name = ""
-        self.Slots = []
-        self.IsNegation = False
-    def print(self):
-        print(self.Name+'(', end="")
-        for p in self.Slots:
-            print(p.Value + ',' + p.VariableName, end="")
-        print(')', end="")
-
-class Expression:
-    def __init__(self):
-        self.Literals = []
-
-class Rule:
-    def _init__(self):
-        self.Head = Predicate()
-        self.Body = []
-    def print(self):
-        print("Head:", end="")
-        self.Head.print()
-        print("Body:", end="")
-        for i in range(0,len(self.Body), 1):
-            self.Body[i].print()
-
 class Grammar:
         def __init__(self):
             operator = Word("+-*/=<><=>=!=")
