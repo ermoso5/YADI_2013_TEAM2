@@ -14,80 +14,91 @@ class Evalute:
         x=0
        
         ## initialize alias name for each predicate 
-        while x < len(Rule.body):
-            Rule.body[x].alias="table%s" %x
-            self.sql_tables+=Rule.body[x].Name +" "+ Rule.body[x].alias +" ,"
+        while x < len(Rule.Body):
+            if Rule.Body[x].__class__== Predicate:
+                Rule.Body[x].alias="table%s" %x
+                self.sql_tables+=Rule.Body[x].Name +" "+ Rule.Body[x].alias +" ,"
             x+=1
         self.sql_tables=self.sql_tables[:-1]                  
-        ## scan the body to search for shared  variables between the predicates
-        while List_Counter < len(Rule.body):
-            if Rule.body[List_Counter].__class__ == Predicate :
+        ## scan the Body to search for shared  variables between the predicates
+        while List_Counter < len(Rule.Body):
+            if Rule.Body[List_Counter].__class__ == Predicate :
                     ## make internal scan between the predicate variables its self 
-                    Rule.body[List_Counter].Non_repeated_perdicate_variables=[]
-                    print("      "+Rule.body[List_Counter].Name)
-                    if len(Rule.body[List_Counter].Slots )>= 1:
+                    Rule.Body[List_Counter].Non_repeated_perdicate_variables=[]
+                    #print("      "+Rule.Body[List_Counter].Name)
+                    if len(Rule.Body[List_Counter].Slots )>= 1:
                         inner_Counter_1 = 0
-                        while inner_Counter_1 < len(Rule.body[List_Counter].Slots):
-                            if Rule.body[List_Counter].Slots[inner_Counter_1].variableName != "" : 
+                        while inner_Counter_1 < len(Rule.Body[List_Counter].Slots):
+                            if Rule.Body[List_Counter].Slots[inner_Counter_1].VariableName != "" : 
                                 ## get list of predicate's variables avoid replication
-                                print(Rule.body[List_Counter].Slots[inner_Counter_1].variableName )
-                                print("*********************")
-                                for s in Rule.body[List_Counter].Non_repeated_perdicate_variables:
-                                    print( s.Var_name)
-                                print("*********************")
-                                if not(any( Rule.body[List_Counter].Slots[inner_Counter_1].variableName in s.Var_name for s in Rule.body[List_Counter].Non_repeated_perdicate_variables )) :
-                                    print("In")     #print("inner "+ inner_Counter_1.__str__())
+                                #print(Rule.Body[List_Counter].Slots[inner_Counter_1].VariableName )
+                                #print("*********************")
+                                #for s in Rule.Body[List_Counter].Non_repeated_perdicate_variables:
+                                    #print( s.Var_name)
+                                #print("*********************")
+                                if not(any( Rule.Body[List_Counter].Slots[inner_Counter_1].VariableName in s.Var_name for s in Rule.Body[List_Counter].Non_repeated_perdicate_variables )) :
+                                    #print("In")     ##print("inner "+ inner_Counter_1.__str__())
                                     perdicate_variable1= perdicate_variable()
-                                    perdicate_variable1.Var_name=Rule.body[List_Counter].Slots[inner_Counter_1].variableName
-                                    perdicate_variable1.table_alias =Rule.body[List_Counter].alias +"."+self.get_Column_name(Rule.body[List_Counter].Name,inner_Counter_1)
-                                    Rule.body[List_Counter].Non_repeated_perdicate_variables.append(perdicate_variable1)
-                                    #print( Rule.body[List_Counter].Non_repeated_perdicate_variables[len( Rule.body[List_Counter].Non_repeated_perdicate_variables)-1].Var_name )
-                                    #print( Rule.body[List_Counter].Non_repeated_perdicate_variables[len( Rule.body[List_Counter].Non_repeated_perdicate_variables)-1].table_alias )                                   
+                                    perdicate_variable1.Var_name=Rule.Body[List_Counter].Slots[inner_Counter_1].VariableName
+                                    perdicate_variable1.table_alias =Rule.Body[List_Counter].alias +".\""+self.get_Column_name(Rule.Body[List_Counter].Name,inner_Counter_1)+"\""
+                                    Rule.Body[List_Counter].Non_repeated_perdicate_variables.append(perdicate_variable1)
+                                    ##print( Rule.Body[List_Counter].Non_repeated_perdicate_variables[len( Rule.Body[List_Counter].Non_repeated_perdicate_variables)-1].Var_name )
+                                    ##print( Rule.Body[List_Counter].Non_repeated_perdicate_variables[len( Rule.Body[List_Counter].Non_repeated_perdicate_variables)-1].table_alias )                                   
                                     ##check for inner relation inside the predicate   F(X,Y,X)
                               
                                 inner_Counter_2 = 0
                                 while inner_Counter_2 < inner_Counter_1 :
-                                    if Rule.body[List_Counter].Slots[inner_Counter_2].variableName==Rule.body[List_Counter].Slots[inner_Counter_1].variableName :
-                                        self.sql_condition += Rule.body[List_Counter].alias +"."+ self.get_Column_name(Rule.body[List_Counter].Name,inner_Counter_1) +" = "+ Rule.body[List_Counter].alias +"."+ self.get_Column_name(Rule.body[List_Counter].Name,inner_Counter_2) +" and "
+                                    if Rule.Body[List_Counter].Slots[inner_Counter_2].VariableName==Rule.Body[List_Counter].Slots[inner_Counter_1].VariableName :
+                                        self.sql_condition += Rule.Body[List_Counter].alias +".\""+ self.get_Column_name(Rule.Body[List_Counter].Name,inner_Counter_1) +"\" = "+ Rule.Body[List_Counter].alias +"."+ self.get_Column_name(Rule.Body[List_Counter].Name,inner_Counter_2) +"\" and "
                                     inner_Counter_2+=1 
                             else:
-                                self.sql_condition += Rule.body[List_Counter].alias +"."+ self.get_Column_name(Rule.body[List_Counter].Name,inner_Counter_1) + " = "+ Rule.body[List_Counter].Slots[inner_Counter_1].Value +" and "              
+                                self.sql_condition += Rule.Body[List_Counter].alias +"."+ self.get_Column_name(Rule.Body[List_Counter].Name,inner_Counter_1) + " = '"+ Rule.Body[List_Counter].Slots[inner_Counter_1].Value +"' and "              
    
-                            #print(inner_Counter_1)
+                            ##print(inner_Counter_1)
                             inner_Counter_1+=1
+            else:
+                if Rule.Body[List_Counter].__class__ == Expression :       ##   in case the variable is defined before the condition
+                    for RU in Rule.Body:
+                        if RU.__class__ == Predicate :                                                                             
+                            if any( Rule.Body[List_Counter].Literals[0] in s.Var_name for s in RU.Non_repeated_perdicate_variables ):
+                                 for val1 in  RU.Non_repeated_perdicate_variables:
+                                     if val1.Var_name==Rule.Body[List_Counter].Literals[0]:
+                                        self.sql_condition += val1.table_alias+" "+Rule.Body[List_Counter].Literals[1]+ " '"+Rule.Body[List_Counter].Literals[2]+"' and "
+                                        break;
+                         
             List_Counter+=1
-        print("----------------------------------")
-        print("----------------------------------")
-        print("*********************")
-        for rr in Rule.body:
-            print( rr.Name)
-            for s in rr.Non_repeated_perdicate_variables:
-                print("   "+ s.Var_name)
-        
-        print("*********************")
+        #print("----------------------------------")
+        #print("----------------------------------")
         
         
         ## search for relation with previous predicates' slots "variable" 
         List_Counter=1
-        if len(Rule.body) > 1 :
-            while List_Counter < len(Rule.body) :
-                print(Rule.body[List_Counter].Name)
+        if len(Rule.Body) > 1 :
+            while List_Counter < len(Rule.Body) :
+                if Rule.Body[List_Counter].__class__ != Predicate:
+                    List_Counter+=1
+                    continue
+                   
                 Variable_Counter=0
-                while Variable_Counter < len(Rule.body[List_Counter].Non_repeated_perdicate_variables):
-                            print("   "+Rule.body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name) 
+                while Variable_Counter < len(Rule.Body[List_Counter].Non_repeated_perdicate_variables):
+                            #print("   "+Rule.Body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name) 
                             List_Counter_2=0
                             while List_Counter_2 < List_Counter:
                                 Variable_Counter_2=0
-                                while Variable_Counter_2 < len(Rule.body[List_Counter_2].Non_repeated_perdicate_variables):
-                                    #print(Rule.body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name)     
-                                    #print(Rule.body[List_Counter_2].Non_repeated_perdicate_variables[Variable_Counter_2].Var_name)
-                                    if Rule.body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name==Rule.body[List_Counter_2].Non_repeated_perdicate_variables[Variable_Counter_2].Var_name:
-                                        self.sql_condition +=Rule.body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].table_alias +" = " + Rule.body[List_Counter_2].Non_repeated_perdicate_variables[Variable_Counter_2].table_alias  +" and "
+                                while Variable_Counter_2 < len(Rule.Body[List_Counter_2].Non_repeated_perdicate_variables):
+                                    ##print(Rule.Body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name)     
+                                    ##print(Rule.Body[List_Counter_2].Non_repeated_perdicate_variables[Variable_Counter_2].Var_name)
+                                    if Rule.Body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name==Rule.Body[List_Counter_2].Non_repeated_perdicate_variables[Variable_Counter_2].Var_name:
+                                        self.sql_condition +=Rule.Body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].table_alias +" = " + Rule.Body[List_Counter_2].Non_repeated_perdicate_variables[Variable_Counter_2].table_alias  +" and "
                                     Variable_Counter_2+=1
                                 List_Counter_2+=1
                             Variable_Counter+=1
                 List_Counter+=1       
             
         self.sql_condition=self.sql_condition[:-4]
+  
+  
+  
+  
   
   
