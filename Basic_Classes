@@ -1,5 +1,16 @@
-from MainPKG.Parser import *
+from MainPKG.Grammar import *
 from pyparsing import ParseException
+
+class Slot:
+    def __init__(self, arg):
+        self.VariableName = self.Value = ""
+        try:
+            dummy = Grammar().constantRule().parseString(arg)
+            self.Value = arg
+        except ParseException:          
+            self.VariableName = arg
+    def print(self):
+        print(self.Value + self.VariableName, end="")
 
 class Predicate:
     Non_repeated_perdicate_variables=[]
