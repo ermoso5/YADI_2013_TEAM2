@@ -21,7 +21,6 @@ class Database:
             self.Alchemy_engine = create_engine('postgresql://postgres:'+self.DB_password+'@localhost:5432/'+self.DB_name+'') # I create a database named Datalog and the code is dmkm in postgreSQL
         except Exception as inst:
             print("Problem during create database engine")
-            print(inst.val)
             return
         self.Map=Maps()
         Inspector = reflection.Inspector.from_engine(self.Alchemy_engine)
@@ -36,6 +35,11 @@ class Database:
                 Columns_list_temp.append(ColumnsX['name'])
             tableN=table(tableX,Columns_list_temp)
             self.Map.tables.append(tableN)
+    
+    def Select(self,Query):
+        cur = self.engine.cursor()
+        cur.execute (Query)
+        return cur.fetchall()
 
 class initialization_class:
     DB=null
@@ -53,19 +57,27 @@ class initialization_class:
         database_password=sys.stdin.readline()
         database_password=database_password[:-1]
         #print(database_password)
-        print("initialize schema")
         self.DB.DB_name=database_name
         self.DB.DB_user=database_username
         self.DB.DB_password=database_password
+        self.DB.loadMap()
+        print("***  schema initialized successfully")
+        
+    DB_name=""
+    DB_user=""    
+    DB_password=""
+        
+    def Connet(self):
+        self.DB=Database()
+        self.DB.DB_name=self.DB_name
+        self.DB.DB_user=self.DB_user
+        self.DB.DB_password=self.DB_password
         self.DB.loadMap()
     
     
     def intiatlize_GUI(self):
         self.DB=Database()
-        database_name=""
-        database_username=""
-        database_password=""
-        self.DB.DB_name=database_name
-        self.DB.DB_user=database_username
-        self.DB.DB_password=database_password
+        self.DB.DB_name=""
+        self.DB.DB_user=""
+        self.DB.DB_password=""
         self.DB.loadMap()
