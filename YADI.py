@@ -18,9 +18,9 @@ class YADI_UI:
 
     def execute(self):
         DB=Database()
-        DB.DB_name=self.db_name.get()
-        DB.DB_user=self.db_user_name.get()
-        DB.DB_password=self.db_password.get()
+        DB.DB_name="Tiny_copy" #self.db_name.get()
+        DB.DB_user= "postgres" #self.db_user_name.get()
+        DB.DB_password="_password" #self.db_password.get()
         DB.loadMap()
 
         Rs=self.parser.GetRules()
@@ -34,7 +34,11 @@ class YADI_UI:
                 Label(self.results, text="Query is " + EC.sql_tables+" where "+EC.sql_condition, bg="white", width=200).pack()
                 break
 
-        Rows=DB.Select(EC.sql_tables+" where "+EC.sql_condition)
+        if(len(EC.sql_condition) > 0):
+            Rows = DB.Select(EC.sql_tables + " where "+EC.sql_condition)
+        else:
+            Rows = DB.Select(EC.sql_tables)
+
         for R in Rows:
             Label(self.results, text=R, bg="white", width=200).pack()
 
@@ -72,7 +76,7 @@ class YADI_UI:
         #set query mode
         query_mode = Frame(master, width=400).pack()
 
-        query_lb = Label(query_mode, text="Query").pack()
+        Label(query_mode, text="Query").pack()
         query_inp = Entry(query_mode, width=200, bg="white")
         query_inp.pack()
 
