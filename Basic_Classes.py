@@ -5,9 +5,9 @@ class Slot:
     def __init__(self, arg):
         self.VariableName = self.Value = ""
         try:
-            dummy = Grammar().constantRule().parseString(arg)
+            dummy = Grammar().constant.parseString(arg)
             self.Value = arg
-        except ParseException:          
+        except ParseException:
             self.VariableName = arg
     def print(self):
         print(self.Value + self.VariableName, end="")
@@ -44,7 +44,7 @@ class Expression:
 
 class Maps:
     tables=[]
-     
+
 class table:
     def __init__(self, name1, Arrenged_Columns):
         self.name=name1
@@ -54,4 +54,4 @@ class perdicate_variable:
     def __init__(self):
         self.Var_name=""
         self.table_alias = ""
-        
+

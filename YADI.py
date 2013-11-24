@@ -26,7 +26,7 @@ class YADI_UI:
         Rs=self.parser.GetRules()
         EC=Evalute()
         query= self.query.get() #"aV(X,Y)"
-        F=self.parser.toPredicate(Grammar().predicateRule().parseString(query))
+        F=self.parser.toPredicate(Grammar().literal.parseString(query))
 
         for R in Rs:
             if R.Head.Name==F.Name:

@@ -3,30 +3,30 @@ from MainPKG.Basic_Classes import *
 
 class DatalogParser:
     def __init__(self, input_file):
-        self.rules_file = input_file 
+        self.rules_file = input_file
 
     ##############  API ########################
 
     def SetQuery(self, query):
         self.query = query
-        
-    def GetQuery(self):      
-        query_rule = Literal("?-").suppress() + Grammar().predicateRule()
+
+    def GetQuery(self):
+        query_rule = Literal("?-").suppress() + Grammar().literal
         try:
             query_breakdown = query_rule.parseString(self.query)
         except ParseException:
             print("No query specified")
             return
-        
+
         return self.toPredicate(query_breakdown)
-        
+
     def GetRules(self):
         rules = []
         rule_number = 1
-        
+
         for i in self.getStatements():
             try:
-                Grammar().factRule().parseString(i)
+                Grammar().fact.parseString(i)
                 new_rule = self.toFact(i)
             except ParseException:
                 try:
@@ -47,7 +47,7 @@ class DatalogParser:
 
     def getStatements(self):
         return open(self.rules_file).read().splitlines()
-        
+
     def toPredicate(self, input_break):
         #input_break - [Opt(not), Name, P1, P2, ..., PN]
         predicate = Predicate()
@@ -59,40 +59,40 @@ class DatalogParser:
             param_index = 1
             predicate.Name = input_break[0]
         predicate.Slots = []
-        
+
         for i in range(param_index, len(input_break), 1):
             slot = Slot(input_break[i])
-            predicate.Slots.append(slot)  
+            predicate.Slots.append(slot)
         return predicate
 
     def toExpression(self, input_break):
         expr = Expression()
         expr.Literals = input_break
         return expr
-    
+
     def toGoal(self, input_break):
         if '=' in list(input_break):
             return self.toExpression(input_break)
         else:
-            return self.toPredicate(input_break)            
-            
-    
+            return self.toPredicate(input_break)
+
+
     def toRule(self, input):
-        statement_breakdown = Grammar().statementRule().parseString(input)
+        statement_breakdown = Grammar().rule.parseString(input)
         if not statement_breakdown[1] == ":-":
             print("Something went wrong")
             return
-        
+
         rule = Rule()
         rule.Head = self.toPredicate(statement_breakdown[0])
         rule.Body = []
         for i in range(0, len(statement_breakdown[2]), 1):
             rule.Body.append(self.toGoal(statement_breakdown[2][i]))
-        
+
         return rule
-    
+
     def toFact(self, input):
-        input_break = Grammar().factRule().parseString(input)
+        input_break = Grammar().fact.parseString(input)
         fact = Predicate()
         print(input_break)
         if input_break[0] == 'not':
@@ -103,11 +103,11 @@ class DatalogParser:
             param_index = 1
             fact.Name = input_break[0]
         fact.Slots = []
-        
+
         for i in range(param_index, len(input_break), 1):
             slot = Slot(input_break[i])
-            fact.Slots.append(slot)  
+            fact.Slots.append(slot)
         return fact
-    
 
-    
+
+

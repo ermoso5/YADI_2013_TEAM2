@@ -3,47 +3,30 @@ from pyparsing import *
 class Grammar:
     def __init__(self):
         operator = Word("+-*/=<><=>=!=")
-        capital_words = Combine(Word("ABCDEFGHIJKLMNOPQRSTUVWXYZ_") + Optional(Word(alphanums))) # define predicate names starting with capital letters
+        capital_words = Combine(Word("ABCDEFGHIJKLMNOPQRSTUVWXYZ_", exact=1) + Optional(Word(alphanums)))# define predicate names starting with capital letters
         small_words = Combine(Word("abcdefghijklmnopqrstuvwxyz") + Optional(Word(alphanums+"_")))
         string = QuotedString(quoteChar="'",unquoteResults=False)
-        number = Combine(Optional(Word("-")) + Word(nums) + Optional(Literal('.') + OneOrMore(Word(nums)) + Optional(Literal("E") + OneOrMore(Word(nums)) ))) #+StringEnd())
+        number = Combine(Optional(oneOf("- +")) + Word(nums) + Optional(Literal('.') + OneOrMore(Word(nums)) + Optional(Literal("E") + OneOrMore(Word(nums)) ))) #+StringEnd())
 
         predicate_name = small_words
         variable = Literal('_') | capital_words
         constant = number | small_words | string
 
-        param = variable | constant
-        param_list = delimitedList(param,delim=',' ).setName("paramList")
-        pos_predicate_rule = predicate_name + Literal("(").suppress() + param_list + Literal(")").suppress()
-        neg_predicate_rule = Literal("not") +Literal("(").suppress() + pos_predicate_rule + Literal(")").suppress()
-        predicate_rule = pos_predicate_rule | neg_predicate_rule
+        term = variable | constant
+        term_list = delimitedList(term, delim=',').setName("paramList")
+        pos_literal = predicate_name + Literal("(").suppress() + term_list + Literal(")").suppress()
+        neg_literal = Literal("not") +Literal("(").suppress() + pos_literal + Literal(")").suppress()
+        literal = pos_literal | neg_literal #+ expression
 
-        head_param_list = delimitedList(variable, delim=',' ).setName("paramList")
-        pos_head_rule = predicate_name + Literal("(").suppress() + head_param_list + Literal(")").suppress()
-        neg_head_rule = Literal("not") + Literal("(").suppress() + pos_head_rule + Literal(")").suppress()
-        head_rule = pos_head_rule | neg_head_rule
+        head = pos_literal
 
-        fact_rule = predicate_rule + Literal(".").suppress() + StringEnd()
+        fact = literal + Literal(".").suppress() + StringEnd()
 
-        self.equation = equation = param + Literal("=") + param
+        self.equation = equation = term + Literal("=") + term
 
-        predicate_list = delimitedList(Optional(quotedString.copy() | Group(predicate_rule | equation), default=""),delim=',' ).setName("predicateList")
-        self.statement_rule = (Group(head_rule) + ":-" + Group(predicate_list)) | fact_rule
-        self.predicate_rule = predicate_rule
-        self.constant_rule = constant
-        self.fact_rule = fact_rule
+        body = delimitedList(Group(literal | equation),delim=',' ).setName("predicateList")
+        self.rule = (Group(head) + ":-" + Group(body)) | fact
+        self.literal = literal
+        self.constant = constant
+        self.fact = fact
 
-    def statementRule(self):
-        return self.statement_rule
-
-    def factRule(self):
-        return self.fact_rule
-
-    def predicateRule(self):
-        return self.predicate_rule
-
-    def constantRule(self):
-        return self.constant_rule
-
-    def equationRule(self):
-        return self.equation
