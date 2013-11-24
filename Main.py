@@ -18,7 +18,7 @@ DatalogParser1= DatalogParser(path)
 Rs=DatalogParser1.GetRules()
 EC=Evalute()
 query="student_book_age(4,4)"
-F=DatalogParser1.toPredicate(Grammar().predicateRule().parseString(query))
+F=DatalogParser1.toPredicate(Grammar().literal.parseString(query))
 
 #initClass.DB_name="Datalog"
 #initClass.DB_user="postgres"
