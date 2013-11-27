@@ -18,9 +18,9 @@ class YADI_UI:
 
     def execute(self):
         DB=Database()
-        DB.DB_name="Tiny_copy" #self.db_name.get()
-        DB.DB_user= "postgres" #self.db_user_name.get()
-        DB.DB_password="_password" #self.db_password.get()
+        DB.DB_name= self.db_name.get()
+        DB.DB_user= self.db_user_name.get()
+        DB.DB_password= self.db_password.get()
         DB.loadMap()
 
         Rs=self.parser.GetRules()
