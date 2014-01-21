@@ -4,6 +4,7 @@ from MainPKG.Basic_Classes import *
 class DatalogParser:
     def __init__(self, input_file):
         self.rules_file = input_file
+        open('C:/Python33/YADI_log.txt', 'w').close()
 
     ##############  API ########################
 
@@ -38,6 +39,21 @@ class DatalogParser:
             rules.append(new_rule)
             rule_number += 1
         return rules
+
+    def GetRuleFromQuery(self, query):
+        rules = self.GetRules()
+        query = self.toPredicate(Grammar().fact.parseString(query))
+        query_rule_found = False
+        for r in rules:
+            if query.Name == r.Head.Name:
+                if len(query.Slots) == len(r.Head.Slots):
+                    return query
+                else:
+                    query_rule_found == False
+        if not query_rule_found:
+            log = open('C:/Python33/YADI_log.txt', 'w')
+            log.write('There is no rule defining the predicate of the query.')
+            log.close()
 
     def Print(self):
         for i in self.GetRules():
