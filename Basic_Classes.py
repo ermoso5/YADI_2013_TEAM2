@@ -31,7 +31,8 @@ class Rule:
         self.Body = []
     def print(self):
         print("Head:", end="")
-        self.Head.print()
+        if self.Head is not None:
+            self.Head.print()
         print("Body:", end="")
         for i in range(0,len(self.Body), 1):
             self.Body[i].print()
@@ -40,7 +41,9 @@ class Rule:
 class Expression:
     def __init__(self):
         self.Literals = []
-
+    def print(self):
+    #[['X'], '>=', ['2', '+', 'Y']]
+        print(self.Literals)
 
 class Maps:
     tables=[]

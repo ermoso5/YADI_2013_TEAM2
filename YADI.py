@@ -5,7 +5,7 @@ from MainPKG.Evaluator import *
 from MainPKG.DatabaseConnection import *
 
 class YADI_UI:
-    parser = null
+    parser = None
     def load_rules(self):
         self.rules_file_path = filedialog.askopenfilename(filetypes=[('Text files', '*.txt')], initialdir = "C:/Python33")
         if self.rules_file_path:

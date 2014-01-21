@@ -25,14 +25,15 @@ class DatalogParser:
         rule_number = 1
 
         for i in self.getStatements():
+            i= i.strip()
             try:
                 Grammar().fact.parseString(i)
                 new_rule = self.toFact(i)
-            except ParseException:
+            except Exception:
                 try:
                     new_rule = self.toRule(i)
                 except ParseException:
-                    print("Found an error in rule "+ str(rule_number))
+                    print("Found an error in rule number "+ str(rule_number))
                     return
             rules.append(new_rule)
             rule_number += 1
@@ -46,7 +47,7 @@ class DatalogParser:
     ############# PRIVATE FUNCTIONS #####################
 
     def getStatements(self):
-        return open(self.rules_file).read().splitlines()
+        return filter(None, open(self.rules_file).read().splitlines())
 
     def toPredicate(self, input_break):
         #input_break - [Opt(not), Name, P1, P2, ..., PN]
@@ -71,7 +72,8 @@ class DatalogParser:
         return expr
 
     def toGoal(self, input_break):
-        if '=' in list(input_break):
+        #input_break - [Opt(not), Name, P1, P2, ..., PN]
+        if input_break[1] in Grammar().built_operations:
             return self.toExpression(input_break)
         else:
             return self.toPredicate(input_break)
@@ -79,6 +81,7 @@ class DatalogParser:
 
     def toRule(self, input):
         statement_breakdown = Grammar().rule.parseString(input)
+
         if not statement_breakdown[1] == ":-":
             print("Something went wrong")
             return
@@ -86,14 +89,22 @@ class DatalogParser:
         rule = Rule()
         rule.Head = self.toPredicate(statement_breakdown[0])
         rule.Body = []
-        for i in range(0, len(statement_breakdown[2]), 1):
-            rule.Body.append(self.toGoal(statement_breakdown[2][i]))
+        body = statement_breakdown[2]
 
+        for i in range(0, len(body), 1):
+            try:
+                rule.Body.append(self.toGoal(body[i]))
+            except Exception:
+                print("Error on parsing")
         return rule
 
     def toFact(self, input):
         input_break = Grammar().fact.parseString(input)
         fact = Predicate()
+        rule = Rule()
+        rule.Head = None
+        rule.Body = []
+
         print(input_break)
         if input_break[0] == 'not':
             param_index = 2
@@ -107,7 +118,8 @@ class DatalogParser:
         for i in range(param_index, len(input_break), 1):
             slot = Slot(input_break[i])
             fact.Slots.append(slot)
-        return fact
+        rule.Body.append(fact)
+        return rule
 
 
 

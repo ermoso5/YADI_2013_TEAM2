@@ -2,7 +2,8 @@ from pyparsing import *
 
 class Grammar:
     def __init__(self):
-        operator = Word("+-*/=<><=>=!=")
+        operator = oneOf("+ - * / % ^")
+        built_operations = ['=', '!=', '>=', '<=', '>', '<', 'is']
         capital_words = Combine(Word("ABCDEFGHIJKLMNOPQRSTUVWXYZ_", exact=1) + Optional(Word(alphanums)))# define predicate names starting with capital letters
         small_words = Combine(Word("abcdefghijklmnopqrstuvwxyz") + Optional(Word(alphanums+"_")))
         string = QuotedString(quoteChar="'",unquoteResults=False)
@@ -22,11 +23,13 @@ class Grammar:
 
         fact = literal + Literal(".").suppress() + StringEnd()
 
-        self.equation = equation = term + Literal("=") + term
+        built = Group(term + ZeroOrMore(operator + term)) + oneOf(built_operations) + Group(term + ZeroOrMore(operator + term))
+        self.expression = expression = built
 
-        body = delimitedList(Group(literal | equation),delim=',' ).setName("predicateList")
+        body = delimitedList(Group(literal | expression),delim=',' ).setName("predicateList") +Literal(".").suppress() + StringEnd()
         self.rule = (Group(head) + ":-" + Group(body)) | fact
         self.literal = literal
         self.constant = constant
+        self.built_operations = built_operations
         self.fact = fact
 
