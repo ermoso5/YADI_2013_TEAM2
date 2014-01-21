@@ -15,19 +15,21 @@ class Grammar:
 
         term = variable | constant
         term_list = delimitedList(term, delim=',').setName("paramList")
+        fact_arg_list = delimitedList(constant, delim=',').setName("factParamList")
         pos_literal = predicate_name + Literal("(").suppress() + term_list + Literal(")").suppress()
         neg_literal = Literal("not") +Literal("(").suppress() + pos_literal + Literal(")").suppress()
         literal = pos_literal | neg_literal #+ expression
 
         head = pos_literal
 
-        fact = literal + Literal(".").suppress() + StringEnd()
+        fact = predicate_name + Literal("(").suppress() + fact_arg_list + Literal(")").suppress() + Literal(".").suppress() + StringEnd()
 
         built = Group(term + ZeroOrMore(operator + term)) + oneOf(built_operations) + Group(term + ZeroOrMore(operator + term))
         self.expression = expression = built
 
         body = delimitedList(Group(literal | expression),delim=',' ).setName("predicateList") +Literal(".").suppress() + StringEnd()
-        self.rule = (Group(head) + ":-" + Group(body)) | fact
+        self.rule = (Group(head) + ":-" + Group(body))
+        self.no_body_rule = Group(head) + Literal(".").suppress() + StringEnd()
         self.literal = literal
         self.constant = constant
         self.built_operations = built_operations

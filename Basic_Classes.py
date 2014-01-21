@@ -37,6 +37,15 @@ class Rule:
         for i in range(0,len(self.Body), 1):
             self.Body[i].print()
 
+class Fact:
+    def __init__(self):
+        self.Name = ""
+        self.Slots = []
+    def print(self):
+        print(self.Name+'(', end="")
+        for p in self.Slots:
+            print(p.Value + ',' + p.VariableName, end="")
+        print(')', end="")
 
 class Expression:
     def __init__(self):

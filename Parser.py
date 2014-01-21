@@ -4,7 +4,8 @@ from MainPKG.Basic_Classes import *
 class DatalogParser:
     def __init__(self, input_file):
         self.rules_file = input_file
-        open('C:/Python33/YADI_log.txt', 'w').close()
+        self.log_file = 'C:/Python33/YADI_log.txt'
+        open(self.log_file, 'w').close()
 
     ##############  API ########################
 
@@ -96,46 +97,42 @@ class DatalogParser:
 
 
     def toRule(self, input):
-        statement_breakdown = Grammar().rule.parseString(input)
-
-        if not statement_breakdown[1] == ":-":
-            print("Something went wrong")
-            return
+        try:
+            statement_breakdown = Grammar().rule.parseString(input)
+        except Exception:
+            try:
+                statement_breakdown = Grammar().no_body_rule.parseString(input)
+            except Exception:
+                open(self.log_file, 'w').write('The rule was not valid.').close()
 
         rule = Rule()
         rule.Head = self.toPredicate(statement_breakdown[0])
         rule.Body = []
-        body = statement_breakdown[2]
 
-        for i in range(0, len(body), 1):
-            try:
-                rule.Body.append(self.toGoal(body[i]))
-            except Exception:
-                print("Error on parsing")
+        if len(statement_breakdown) > 1:
+            body = statement_breakdown[2]
+
+            for i in range(0, len(body), 1):
+                try:
+                    rule.Body.append(self.toGoal(body[i]))
+                except Exception:
+                    print("Error on parsing")
         return rule
 
     def toFact(self, input):
         input_break = Grammar().fact.parseString(input)
-        fact = Predicate()
-        rule = Rule()
-        rule.Head = None
-        rule.Body = []
+        fact = Fact()
+        fact.Name = input_break[0]
 
         print(input_break)
-        if input_break[0] == 'not':
-            param_index = 2
-            fact.IsNegation = True
-            fact.Name = input_break[1]
-        else:
-            param_index = 1
-            fact.Name = input_break[0]
+
         fact.Slots = []
 
-        for i in range(param_index, len(input_break), 1):
+        for i in range(1, len(input_break), 1):
             slot = Slot(input_break[i])
             fact.Slots.append(slot)
-        rule.Body.append(fact)
-        return rule
+
+        return fact
 
 
 
