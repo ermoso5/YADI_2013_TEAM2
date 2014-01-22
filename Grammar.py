@@ -34,4 +34,5 @@ class Grammar:
         self.constant = constant
         self.built_operations = built_operations
         self.fact = fact
+        self.variable = variable
 

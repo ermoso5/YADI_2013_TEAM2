@@ -29,21 +29,20 @@ class DatalogParser:
         for i in self.getStatements():
             i= i.strip()
             try:
-                Grammar().fact.parseString(i)
-                new_rule = self.toFact(i)
+                new_rule = self.toRule(i)
             except Exception:
-                try:
-                    new_rule = self.toRule(i)
-                except ParseException:
-                    print("Found an error in rule number "+ str(rule_number))
-                    return
+                open(self.log_file, 'a').write("Found an error in rule number "+ str(rule_number)).close()
+                return
+
+            if not self.checkSafety(new_rule):
+                open(self.log_file, 'a').write("Warning: Rule number "+ str(rule_number) + " is not safe.").close()
             rules.append(new_rule)
             rule_number += 1
         return rules
 
     def GetRuleFromQuery(self, query):
         rules = self.GetRules()
-        query = self.toPredicate(Grammar().fact.parseString(query))
+        query = self.toPredicate(Grammar().no_body_rule.parseString(query))
         query_rule_found = False
         for r in rules:
             if query.Name == r.Head.Name:
@@ -52,7 +51,7 @@ class DatalogParser:
                 else:
                     query_rule_found == False
         if not query_rule_found:
-            log = open('C:/Python33/YADI_log.txt', 'w')
+            log = open(self.log_file, 'a')
             log.write('There is no rule defining the predicate of the query.')
             log.close()
 
@@ -65,6 +64,50 @@ class DatalogParser:
 
     def getStatements(self):
         return filter(None, open(self.rules_file).read().splitlines())
+
+    def checkSafety(self, rule):
+        #rule = self.toRule(rule)
+        isSafe = True
+        head_var = rule.Head.Slots
+        pos_var = []
+        #get all variables in positive goals
+        for g in rule.Body:
+            if type(g) == Predicate:
+                if not g.IsNegation:
+                    for s in g.Slots:
+                        if s.VariableName:
+                            pos_var.append(s.VariableName)
+
+        for h in rule.Head.Slots:
+            if h.VariableName:
+                if not h.VariableName in pos_var:
+                     isSafe = False
+
+        for b in rule.Body:
+            if type(b) == Expression:
+                for a in self.varFromExpr(b):
+                    if not a in pos_var:
+                        isSafe = False
+
+        for g in rule.Body:
+            if type(g) == Predicate:
+                if g.IsNegation:
+                    for s in g.Slots:
+                        if s.VariableName and not s.VariableName in pos_var:
+                            isSafe = False
+
+        return isSafe
+
+    def varFromExpr(self, expr):
+        all = expr.Literals[0]+expr.Literals[2]
+        vars = []
+        for a in all:
+            try:
+                Grammar().variable.parseString(a)
+                vars.append(a)
+            except Exception:
+                continue
+        return vars
 
     def toPredicate(self, input_break):
         #input_break - [Opt(not), Name, P1, P2, ..., PN]
@@ -99,11 +142,11 @@ class DatalogParser:
     def toRule(self, input):
         try:
             statement_breakdown = Grammar().rule.parseString(input)
-        except Exception:
+        except ParseException:
             try:
                 statement_breakdown = Grammar().no_body_rule.parseString(input)
-            except Exception:
-                open(self.log_file, 'w').write('The rule was not valid.').close()
+            except ParseException:
+                open(self.log_file, 'a').write('The rule was not valid.').close()
 
         rule = Rule()
         rule.Head = self.toPredicate(statement_breakdown[0])
