@@ -19,39 +19,27 @@ class YADI_UI:
                 print("Failed to read file \n'%s'"%self.rules_file_path)
 
     def execute(self):
-        DB=Database()
         #self.parser = DatalogParser("C:/Python33/Rules.txt")
-        DB.DB_name = self.db_name.get() #"Tiny_twitter"
-        DB.DB_user = self.db_user_name.get() # "postgres"
-        DB.DB_password = self.db_password.get() #"_password"
-        DB.loadMap()
+        initClass=initialization_class()
+        initClass.DB_name = self.db_name.get() #"Datalog"
+        initClass.DB_user = self.db_user_name.get() # "postgres"
+        initClass.DB_password = self.db_password.get() #"_password"
+        initClass.Connet()
 
         for child in self.results.winfo_children():
             child.destroy()
 
         try:
-            Rs = self.parser.GetRules()
-            EC = Evalute()
-            query = self.query.get() #"aV(X,Y)"
-            F=self.parser.GetRuleFromQuery(query)
-
-            for R in Rs:
-                if R.Head.Name==F.Name:
-                    EC.evalute(R)
-                    Label(self.results, text="Query is " + EC.sql_tables+" where "+EC.sql_condition, bg="white").pack()
-                    break
-
-            if(len(EC.sql_condition) > 0):
-                Rows = DB.Select(EC.sql_tables + " where "+EC.sql_condition)
-            else:
-                Rows = DB.Select(EC.sql_tables)
-
+            query = self.query.get() #'student_book_age(S,F,D).'
+            EC=Evalutor(self.parser,initClass)
+            Rows = EC.Execute(query)
 
             warnings = open(self.parser.log_file).read()
             Label(self.results, text=warnings, bg="white", fg="red").pack()
 
             for R in Rows:
-                Label(self.results, text=R, bg="white").pack()
+                row =' '.join(str(R).split())
+                Label(self.results, text=row, bg="white").pack()
 
         except Exception:
             errors = open(self.parser.log_file).read()

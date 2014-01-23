@@ -15,10 +15,15 @@ class Slot:
 class Predicate:
     Non_repeated_perdicate_variables=[]
     alias=""
+    Slots = []
     def __init__(self):
         self.Name = ""
         self.Slots = []
         self.IsNegation = False
+    def GetName(self):
+        return self.Name
+    def GetArity(self):
+        return len(self.Slots)
     def print(self):
         print(self.Name+'(', end="")
         for p in self.Slots:
@@ -26,9 +31,44 @@ class Predicate:
         print(')', end="")
 
 class Rule:
+    IsPrimary=None     # means it has no body " R(X,Y,X). " or all body's predicates are tables in Database
+    IsRecusive=None
+    #parameters related to structure of rule query
+    sql_condition=""
+    sql_tables=" "
+    View_query=""
+    View_name=""
+    #################
+
+    #parameters related to unify the rules with query  ex  Q('AXCV',10)
+    Where_clause=""
+    #################
+
+
+    def Print_result(self,DB):
+        sql="select * from "+self.View_name
+        if self.Where_clause !="":
+            sql+=" where "+self.Where_clause
+        print(sql)
+        rows =DB.Select(sql)
+        for row in rows:
+            print (self.Head.Name+str(row))
+        return rows
+
+
+    def get_Query(self):
+        if self.sql_condition=="":
+            return self.sql_tables
+        else:
+            return self.sql_tables +" where "+self.sql_condition
+
     def _init__(self):
         self.Head = Predicate()
         self.Body = []
+    def GetHeadName(self):
+        return self.Head.GetName()
+    def GetRuleArity(self):
+        return len(self.Body)
     def print(self):
         print("Head:", end="")
         if self.Head is not None:
@@ -41,6 +81,10 @@ class Fact:
     def __init__(self):
         self.Name = ""
         self.Slots = []
+    def GetName(self):
+        return self.Name
+    def GetFactArity(self):
+        return len(self.Slots)
     def print(self):
         print(self.Name+'(', end="")
         for p in self.Slots:
@@ -50,17 +94,29 @@ class Fact:
 class Expression:
     def __init__(self):
         self.Literals = []
+    def GetOperation(self):
+        return self.Literals[1]
     def print(self):
     #[['X'], '>=', ['2', '+', 'Y']]
         print(self.Literals)
 
 class Maps:
     tables=[]
+    views=[]
 
 class table:
     def __init__(self, name1, Arrenged_Columns):
         self.name=name1
         self.Arrenged_Columns=Arrenged_Columns
+
+class view:
+    def __init__(self, name,alias, Arrenged_Columns):
+        self.alias=alias
+        self.name=name
+        self.Arrenged_Columns=Arrenged_Columns
+
+
+
 
 class perdicate_variable:
     def __init__(self):

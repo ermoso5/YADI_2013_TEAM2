@@ -18,7 +18,8 @@ class Database:
     def loadMap(self):
         try:
             self.engine = dbapi2.connect (database=self.DB_name, user=self.DB_user, password=self.DB_password)
-            self.Alchemy_engine = create_engine('postgresql://postgres:'+self.DB_password+'@localhost:5432/'+self.DB_name+'') # I create a database named Datalog and the code is dmkm in postgreSQL
+            self.Alchemy_engine = create_engine('postgresql://postgres:'+self.DB_password+'@localhost:5432/'+self.DB_name+'') 
+            # I create a database named Datalog and the code is dmkm in postgreSQL
         except Exception as inst:
             print("Problem during create database engine")
             return
@@ -38,8 +39,18 @@ class Database:
     
     def Select(self,Query):
         cur = self.engine.cursor()
+        
         cur.execute (Query)
         return cur.fetchall()
+    
+    def execute_View(self,View_Query):
+        Connection1 = self.Alchemy_engine.connect()
+        trans = Connection1.begin()
+        print(View_Query)
+        Connection1.execute(View_Query);
+        trans.commit()
+        Connection1.close()
+        
 
 class initialization_class:
     DB=null
