@@ -68,6 +68,7 @@ class Evalutor:
     
     
     def Execute(self,Query):
+        self.PrepareRules_create_views_for_primary_rules()
         Fact=self.DatalogParserT.toPredicate(Grammar().literal.parseString(Query))
         RuleT=Rule()
         RuleT.Head=Fact
