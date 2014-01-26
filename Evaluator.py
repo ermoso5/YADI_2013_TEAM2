@@ -13,7 +13,10 @@ class Evalutor:
    
    
     def __init__(self, DatalogParserT1,initClassT):
+        self.__init2__(DatalogParserT1,initClassT)
        
+    def __init2__(self, DatalogParserT1,initClassT):
+      
         self.DatalogParserT=DatalogParserT1
         
         self.initClass=initClassT
@@ -68,7 +71,7 @@ class Evalutor:
         Fact=self.DatalogParserT.toPredicate(Grammar().literal.parseString(Query))
         RuleT=Rule()
         RuleT.Head=Fact
-        self.get_rule_queries(RuleT)
+        return self.get_rule_queries(RuleT)
         
     def Recursive_Rule_execute(self,RuleT):
         self.Recursive_Rule_Prepare(RuleT)
@@ -77,9 +80,9 @@ class Evalutor:
     
     def Recursive_Rule_Prepare(self,RuleT):
         #get the name of view for recursion rule
-       
+        self.initClass.DB.close()
         rule_counter=0
-        Rec_Rule=null
+        Rec_Rule=Rule()
         
         while rule_counter < len(self.Rules):
             Rec_Rule= self.Rules[rule_counter]
@@ -114,8 +117,10 @@ class Evalutor:
         sql+=") "
               
         #create temp table for rec rule
+        
         self.initClass.DB.execute_View(sql)
-                
+        
+        Rec_Rule.sql_condition=""        
         Rec_Rule = self.EvaluteRule(Rec_Rule)
                 
         Rec_view="V_"+Rec_Rule.View_name
@@ -144,7 +149,12 @@ class Evalutor:
         sql1="insert into " +Rec_Rule.View_name +"  (  select * from " + Rec_Rule.Rec_view +   "  EXCEPT   select * from " + Rec_Rule.View_name +"  ) "
         while True:
             self.initClass.DB.execute_View(sql1)
-            rows=self.initClass.DB.Select("select * from "+Rec_Rule.View_name+" where "+Rec_Rule.Where_clause )
+            if Rec_Rule.Where_clause !="":
+                rows=self.initClass.DB.Select("select * from "+Rec_Rule.View_name+" where "+Rec_Rule.Where_clause )
+            else:
+                rows=self.initClass.DB.Select("select * from "+Rec_Rule.View_name)
+            
+            
             if Count == len (rows) :
                 for r in rows :
                     print(r)
@@ -164,14 +174,11 @@ class Evalutor:
             if R.Head.Name==RuleT.Head.Name and len(R.Head.Slots)==len(RuleT.Head.Slots) :
                 # R rule contains view query and unifications from queries
                 R= self.Unification_query_params_rule(R,RuleT.Head)
-                
                 if not R.IsRecusive:   
-                    R.Print_result(self.initClass.DB)
+                   return R.Print_result(self.initClass.DB)
                     
                 else:
                     self.Recursive_Rule_execute(RuleT)
-                    
-                    
                 break      
                         
     def Unification_query_params_rule(self ,Rule,QueryAsPred):
