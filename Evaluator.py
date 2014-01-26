@@ -1,71 +1,159 @@
 from MainPKG.Basic_Classes import *
 from sqlalchemy.dialects.mssql.information_schema import views
 from MainPKG.DatabaseConnection import *
-
+from logging import exception
+              
 class Evalutor:
     Final_query=""
     DatalogParserT=""
     initClass=""
     Rules=[]
-    Views_list=[]
+    Views_list=[]    
     Rules_to_be_executed=[]
-
-
+   
+   
     def __init__(self, DatalogParserT1,initClassT):
-
+       
         self.DatalogParserT=DatalogParserT1
-
+        
         self.initClass=initClassT
-
+        
         self.Rules=DatalogParserT1.GetRules()
-
-        self.PrepareRules_generate_View_alias_for_rule_header()               # for all rules generate alias for headers
-
+        
+        self.PrepareRules_generate_View_alias_for_rule_header()               # for all rules generate alias for headers 
+        
         self.PrepareRules_generate_alias_for_predicate_by_its_tablename()     # for predicates in rules' bodies that represent tables in DB
-
+        
         self.PrepareRules_check_primary_rules()                               # check if all predicates of the rule's body are tables
-
-        self.PrepareRules_Body_slots_alias_names()                            # for primary predicate get the slot expression   for example if we have table with name tab and on column ID them the predicate tab(X) slot will be :  X is defined as tab_ins1.ID   where tab_ins1 is alias for tab table
-
-        self.PrepareRules_Primary_get_Head_slots_relations_with_body()            # join the head slots with body slots r1(X,Y):-pred1(X,Z),pred2(Z,Y) the result in the head will be the first column of pred1 and second column in pred2
-
-        self.PrepareRules_Primary_get_sql_queries()                           #
-
+       
+        self.PrepareRules_Body_slots_alias_names()                            # for primary predicate get the slot expression   for example if we have table with name tab and on column ID them the predicate tab(X) slot will be :  X is defined as tab_ins1.ID   where tab_ins1 is alias for tab table    
+        
+        self.PrepareRules_Primary_get_Head_slots_relations_with_body()            # join the head slots with body slots r1(X,Y):-pred1(X,Z),pred2(Z,Y) the result in the head will be the first column of pred1 and second column in pred2 
+        
+        self.PrepareRules_Primary_get_sql_queries()                           # 
+        
         self.PrepareRules_create_views_for_primary_rules()
-
-
-
-    def Drop_created_views(self):
-       for view in self.Views_list:
-           v="drop view "+view +";"
-           print(v+"++++++++++")
-           self.initClass.DB.execute_View(v)
-
-
-
+       
+                
+    
+   
+       
+    
+    
     def PrepareRules_Primary_get_sql_queries(self):
         RuleCounter=0;
         while RuleCounter < len(self.Rules):
-            # just Header
+            # just Header  
             if len(self.Rules[RuleCounter].Body) == 0 :
               f=0
             else:
                 if not self.Rules[RuleCounter].IsRecusive :
                     self.Rules[RuleCounter]= self.EvaluteRule(self.Rules[RuleCounter])
             RuleCounter+=1
-
-
-
-
+         
+        
+    
+    
     def Execute(self,Query):
         Fact=self.DatalogParserT.toPredicate(Grammar().literal.parseString(Query))
         RuleT=Rule()
         RuleT.Head=Fact
-        return self.get_rule_queries(RuleT)
-
-
-
-   def get_rule_queries(self,RuleT):
+        self.get_rule_queries(RuleT)
+        
+    def Recursive_Rule_execute(self,RuleT):
+        self.Recursive_Rule_Prepare(RuleT)
+   
+    
+    
+    def Recursive_Rule_Prepare(self,RuleT):
+        #get the name of view for recursion rule
+       
+        rule_counter=0
+        Rec_Rule=null
+        
+        while rule_counter < len(self.Rules):
+            Rec_Rule= self.Rules[rule_counter]
+            if Rec_Rule.Head.Name == RuleT.Head.Name and   Rec_Rule.IsRecusive and len(Rec_Rule.Head.Slots)==len(RuleT.Head.Slots):
+                break
+            rule_counter+=1
+                       
+        # union all none recursion rules of the recursion rule 
+        # reach(X,Y):- link(X,Y).
+        # reach(X,Y):- link(Y,X).
+        # reach(X,Y):- link(X,Z),reach(Z,Y).
+        Non_rec_ver_Rules=[]
+        for R in self.Rules:
+            if R.Head.Name == RuleT.Head.Name and   not R.IsRecusive and len(R.Head.Slots)==len(RuleT.Head.Slots):
+                Non_rec_ver_Rules.append(R)
+       
+        # in case no two rules for recursive rule raise error  
+        if len(Non_rec_ver_Rules)==0 :
+            raise "Recursion rule without stopping criteria"
+            return 
+                
+        sql=" create temp  table "+Rec_Rule.View_name+ " as ("
+        for R in Non_rec_ver_Rules :
+            cols=""
+            for slotx in R.Head.Slots :
+                for s in R.Head.Non_repeated_perdicate_variables:
+                    if slotx.VariableName==s.Var_name :
+                        cols+= s.table_alias +" as "+ s.Var_name+" ," 
+            cols=cols[:-1]
+            sql+=" (select "+cols+" from "+R.get_Query() +") union"
+        sql=sql[:-5]
+        sql+=") "
+        
+        print(" " + sql)
+        #create temp table for rec rule
+        self.initClass.DB.execute_View(sql)
+        
+        
+        Rec_Rule = self.EvaluteRule(Rec_Rule)
+        Rec_Rule.print2()
+        
+        Rec_view="V_"+Rec_Rule.View_name
+        Rec_Rule.Rec_view=Rec_view
+        
+        
+        for i in self.Rules[rule_counter].Head.Non_repeated_perdicate_variables:
+            print(i.table_alias)
+        
+        
+        
+        
+        view="create or replace TEMPORARY  view "+Rec_view+" as ( select  "
+                   
+        
+        for slotz in self.Rules[rule_counter].Head.Slots :
+            if slotz.VariableName !="" :
+                found=None
+                for alias in  self.Rules[rule_counter].Head.Non_repeated_perdicate_variables:
+                    if alias.Var_name  == slotz.VariableName :
+                        view += alias.table_alias+" as "+ slotz.VariableName+" ,"
+                        found=true
+                        break
+                if not found:
+                    view += " \' \' as \""+ slotz.VariableName+"\" ,"
+        view =view [:-1]
+        view += " from " + self.Rules[rule_counter].get_Query()+" )"
+        print(" " + view)
+        self.initClass.DB.execute_View(view)
+        self.Rules[rule_counter].View_query=view            
+               
+        Count=0               
+        sql1="insert into " +Rec_Rule.View_name +"  (  select * from " + Rec_Rule.Rec_view +   "  EXCEPT   select * from " + Rec_Rule.View_name +"  ) "
+        while True:
+            self.initClass.DB.execute_View(sql1)
+            rows=self.initClass.DB.Select("select * from "+Rec_Rule.View_name+" where "+Rec_Rule.Where_clause )
+            if Count == len (rows) :
+                for r in rows :
+                    print(r)
+                break
+            else:
+                Count = len (rows)
+       
+        
+    def get_rule_queries(self,RuleT):
         for R in self.Rules:
             if R.Head.Name==RuleT.Head.Name and len(R.Head.Slots)==len(RuleT.Head.Slots) :
                 # R rule contains view query and unifications from queries
@@ -80,9 +168,7 @@ class Evalutor:
                     v=0
                     print ("No execution ")
                 break      
-                
-                
-
+                        
     def Unification_query_params_rule(self ,Rule,QueryAsPred):
         #Get the rule with sql query
         #ResRule = self .EvaluteRule(Rule)
@@ -101,23 +187,23 @@ class Evalutor:
        
         return  Rule          
        
-
-
+       
+       
     def get_result_rows(self):
         return self.initClass.DB.Select(self.Final_query)
-
+    
     def Execute_select(self,Q):
         return self.initClass.DB.Select(Q)
-
-
-
-
-
+    
+         
+   
+            
+     
     def PrepareRules_generate_alias_for_predicate_by_its_tablename(self):
         RulesCounter=0;
         PredicatCounter=0
         x=0
-        # initialize alias name for each predicate
+        # initialize alias name for each predicate 
         for Rule in self.Rules:
             x=0
             while x < len(self.Rules[RulesCounter].Body):
@@ -129,58 +215,63 @@ class Evalutor:
                             #print(self.Rules[RulesCounter].Body[x].Name+"  "+ self.Rules[RulesCounter].Body[x].alias)
                             PredicatCounter+=1
                             self.Rules[RulesCounter].sql_tables+=self.Rules[RulesCounter].Body[x].Name +" \""+ self.Rules[RulesCounter].Body[x].alias +"\" ,"
-                            found= True
+                            found=true
                             break
                     if not found:
-                        for view in Maps.views:
-                            if view.name.upper() == self.Rules[RulesCounter].Body[x].Name.upper():
-                                self.Rules[RulesCounter].Body[x].alias="view_ins%s" %PredicatCounter
-                                PredicatCounter+=1
-                                self.Rules[RulesCounter].sql_tables+= view.alias +" \""+ self.Rules[RulesCounter].Body[x].alias +"\" ,"
-                                break
-
-
-
-
-
-
+                        
+                        if self.Rules[RulesCounter].Body[x].Name.upper() == self.Rules[RulesCounter].Head.Name.upper() :
+                            self.Rules[RulesCounter].Body[x].alias="view_ins%s" %PredicatCounter
+                            PredicatCounter+=1
+                            self.Rules[RulesCounter].sql_tables+= self.Rules[RulesCounter].View_name +" \""+ self.Rules[RulesCounter].Body[x].alias +"\" ,"
+                        else:
+                            
+                            for view in Maps.views:
+                                if view.name.upper() == self.Rules[RulesCounter].Body[x].Name.upper():
+                                    self.Rules[RulesCounter].Body[x].alias="view_ins%s" %PredicatCounter
+                                    PredicatCounter+=1
+                                    self.Rules[RulesCounter].sql_tables+= view.alias +" \""+ self.Rules[RulesCounter].Body[x].alias +"\" ,"
+                        
+                                    
+                    
+                        
+                            
+                            
+                
                 x+=1
             self.Rules[RulesCounter].sql_tables=self.Rules[RulesCounter].sql_tables[:-1]
-            RulesCounter+=1
-
-
-
+            RulesCounter+=1 
+       
+       
+        
     def PrepareRules_create_views_for_primary_rules(self):
         RuleCounter=0;
         while RuleCounter < len(self.Rules):
-            # just Header
+            # just Header  
             if len(self.Rules[RuleCounter].Body) == 0 :
-              f=0
+                f=0
             else:
                 if not self.Rules[RuleCounter].IsRecusive :
                     ViewName= self.Rules[RuleCounter].View_name
-                    view="create or replace view "+ViewName+" as ( select  "
-
+                    view="create or replace TEMPORARY  view "+ViewName+" as ( select  "
+                     
                     for slotz in self.Rules[RuleCounter].Head.Slots :
                         if slotz.VariableName !="" :
                             found=None
                             for alias in  self.Rules[RuleCounter].Head.Non_repeated_perdicate_variables:
                                 if alias.Var_name  == slotz.VariableName :
                                     view += alias.table_alias+" as "+ slotz.VariableName+" ,"
-                                    found=True
+                                    found=true
                                     break
                             if not found:
                                 view += " \' \' as "+ slotz.VariableName+" ,"
                     view =view [:-1]
                     view += " from " + self.Rules[RuleCounter].get_Query()+" )"
-                    #print(view)
                     self.initClass.DB.execute_View(view)
                     self.Rules[RuleCounter].View_query=view
-
             RuleCounter+=1
-
-
-
+   
+        
+        
     def PrepareRules_generate_View_alias_for_rule_header(self):
         RulesCounter=0;
         Columns=[]
@@ -189,18 +280,18 @@ class Evalutor:
             self.Rules[RulesCounter].Body
             View_alias="YADI_DMKM_V_"+self.Rules[RulesCounter].Head.Name + "_"+str(RulesCounter)
             self.Rules[RulesCounter].View_name=View_alias
-            self.Views_list.append(View_alias)
+            self.Views_list.append(View_alias) 
             for slotx in self.Rules[RulesCounter].Head.Slots:
                 S=Slot(slotx.Value + slotx.VariableName)
                 Columns.append(S)
             view1=view(self.Rules[RulesCounter].Head.Name,View_alias,Columns)
             Maps.views.append(view1)
             RulesCounter+=1
-
-
-
-
-        def PrepareRules_check_primary_rules(self):
+        
+        
+    
+        
+    def PrepareRules_check_primary_rules(self):
         #check primary rules 1- no body   2- all predicate in the body are tables 
         RuleCounter=0;
         while RuleCounter < len(self.Rules):
@@ -230,9 +321,9 @@ class Evalutor:
                         break; 
                     BodyCounter+=1
                     
-            RuleCounter+=1    
-
-
+            RuleCounter+=1       
+           
+           
     def get_Column_name(self,tableName,index):
         for i in Maps.tables:
             i.__class__=table
@@ -242,10 +333,10 @@ class Evalutor:
             i.__class__=view
             if i.name.upper()==tableName.upper():
                 return i.Arrenged_Columns[index].VariableName
-
-
-
-
+            
+        
+      
+    
     def PrepareRules_Body_slots_alias_names(self):
         RuleCounter=0;
         while RuleCounter < len(self.Rules):
@@ -255,7 +346,7 @@ class Evalutor:
                 if self.Rules[RuleCounter].Body[List_Counter].__class__ == Predicate  and  len(self.Rules[RuleCounter].Body[List_Counter].Slots )>= 1 :
                     inner_Counter_1 = 0
                     while inner_Counter_1 < len(self.Rules[RuleCounter].Body[List_Counter].Slots):
-                        if self.Rules[RuleCounter].Body[List_Counter].Slots[inner_Counter_1].VariableName != "" and self.Rules[RuleCounter].Body[List_Counter].alias !="":
+                        if self.Rules[RuleCounter].Body[List_Counter].Slots[inner_Counter_1].VariableName != "" and self.Rules[RuleCounter].Body[List_Counter].alias !="": 
                                 ## get list of predicate's variables avoid replication
                                 if not(any( self.Rules[RuleCounter].Body[List_Counter].Slots[inner_Counter_1].VariableName in s.Var_name for s in self.Rules[RuleCounter].Body[List_Counter].Non_repeated_perdicate_variables )) :
                                     perdicate_variable1= perdicate_variable()
@@ -265,13 +356,13 @@ class Evalutor:
                         inner_Counter_1+=1
                 List_Counter+=1
             RuleCounter+=1
-
-
+                        
+    
     def PrepareRules_Primary_get_Head_slots_relations_with_body(self):
-        #just for primary slots
+        #just for primary slots 
         RuleCounter=0;
         while RuleCounter < len(self.Rules):
-            if not self.Rules[RuleCounter].IsRecusive :
+            #if not self.Rules[RuleCounter].IsRecusive :            
                 slots_Counter=0
                 self.Rules[RuleCounter].Head.Non_repeated_perdicate_variables=[]
                 while slots_Counter < len(self.Rules[RuleCounter].Head.Slots):
@@ -292,80 +383,83 @@ class Evalutor:
                                         perdicate_variableT= perdicate_variable()
                                         perdicate_variableT.Var_name=perdicate_variable1.Var_name
                                         perdicate_variableT.table_alias="\" \""
-                                        self.Rules[RuleCounter].Head.Non_repeated_perdicate_variables.append(perdicate_variableT)
+                                        self.Rules[RuleCounter].Head.Non_repeated_perdicate_variables.append(perdicate_variableT) 
                     slots_Counter+=1
-            RuleCounter+=1
+                RuleCounter+=1
+                 
+                    
 
-
-
-
+                
+    
+                   
     def EvaluteRule(self ,Rule):
         List_Counter=0
         # scan the Body to search for shared  variables between the predicates    r1(X,Y):-pred1(X,Z),pred2(Z,Y)
         while List_Counter < len(Rule.Body):
             if Rule.Body[List_Counter].__class__ == Predicate :
-                    ## make internal scan between the predicate variables its self
+                    ## make internal scan between the predicate variables its self 
                     if len(Rule.Body[List_Counter].Slots )>= 1:
                         inner_Counter_1 = 0
                         while inner_Counter_1 < len(Rule.Body[List_Counter].Slots):
-                            if Rule.Body[List_Counter].Slots[inner_Counter_1].VariableName != "" :
+                            if Rule.Body[List_Counter].Slots[inner_Counter_1].VariableName != "" : 
                                 inner_Counter_2 = 0
                                 while inner_Counter_2 < inner_Counter_1 :
                                     if Rule.Body[List_Counter].Slots[inner_Counter_2].VariableName==Rule.Body[List_Counter].Slots[inner_Counter_1].VariableName :
                                         Rule.sql_condition += Rule.Body[List_Counter].alias +"."+ self.get_Column_name(Rule.Body[List_Counter].Name,inner_Counter_1) +" = "+ Rule.Body[List_Counter].alias +"."+ self.get_Column_name(Rule.Body[List_Counter].Name,inner_Counter_2) +" and "
-                                    inner_Counter_2+=1
+                                    inner_Counter_2+=1 
                             else:
                                 if any( Rule.Body[List_Counter].alias in s.name for s in Maps.tables):
-                                    Rule.sql_condition += Rule.Body[List_Counter].alias +"."+ self.get_Column_name(Rule.Body[List_Counter].Name,inner_Counter_1) + " = '"+ Rule.Body[List_Counter].Slots[inner_Counter_1].Value +"' and "
+                                    Rule.sql_condition += Rule.Body[List_Counter].alias +"."+ self.get_Column_name(Rule.Body[List_Counter].Name,inner_Counter_1) + " = "+ Rule.Body[List_Counter].Slots[inner_Counter_1].Value +" and "
                                 else:
                                     if any( Rule.Body[List_Counter].Name in s.name for s in Maps.views)  :
-                                        Rule.sql_condition += Rule.Body[List_Counter].alias +"."+ self.get_Column_name(Rule.Body[List_Counter].Name,inner_Counter_1) + " = '"+ Rule.Body[List_Counter].Slots[inner_Counter_1].Value +"' and "
-
+                                        Rule.sql_condition += Rule.Body[List_Counter].alias +"."+ self.get_Column_name(Rule.Body[List_Counter].Name,inner_Counter_1) + " = "+ Rule.Body[List_Counter].Slots[inner_Counter_1].Value +" and "
+                               
                                   # Rule.Body[List_Counter].alias in tables or (in views + has value for variablename in the map with body )
-
+                          
                             inner_Counter_1+=1
             else:
                 if Rule.Body[List_Counter].__class__ == Expression :       ##   in case the variable is defined before the condition
                     for RU in Rule.Body:
-                        if RU.__class__ == Predicate :
+                        if RU.__class__ == Predicate :                                                                             
                             if any( Rule.Body[List_Counter].Literals[0] in s.Var_name for s in RU.Non_repeated_perdicate_variables ):
                                 for val1 in  RU.Non_repeated_perdicate_variables:
                                     if val1.Var_name==Rule.Body[List_Counter].Literals[0]:
-                                        Rule.sql_condition += val1.table_alias+" "+Rule.Body[List_Counter].Literals[1]+ " '"+Rule.Body[List_Counter].Literals[2]+"' and "
+                                        Rule.sql_condition += val1.table_alias+" "+Rule.Body[List_Counter].Literals[1]+ " "+Rule.Body[List_Counter].Literals[2]+" and "
                                         break;
-
+                         
             List_Counter+=1
         #print("----------------------------------")
-
-        ## search for relation with previous predicates' slots "variable"
+             
+        ## search for relation with previous predicates' slots "variable" 
         List_Counter=1
         if len(Rule.Body) > 1 :
             while List_Counter < len(Rule.Body) :
                 if Rule.Body[List_Counter].__class__ != Predicate:
                     List_Counter+=1
                     continue
-
+                   
                 Variable_Counter=0
                 while Variable_Counter < len(Rule.Body[List_Counter].Non_repeated_perdicate_variables):
-                            #print("   "+Rule.Body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name)
+                            #print("   "+Rule.Body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name) 
                             List_Counter_2=0
                             while List_Counter_2 < List_Counter:
                                 Variable_Counter_2=0
                                 while Variable_Counter_2 < len(Rule.Body[List_Counter_2].Non_repeated_perdicate_variables):
-                                    ##print(Rule.Body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name)
+                                    ##print(Rule.Body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name)     
                                     ##print(Rule.Body[List_Counter_2].Non_repeated_perdicate_variables[Variable_Counter_2].Var_name)
                                     if Rule.Body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].Var_name==Rule.Body[List_Counter_2].Non_repeated_perdicate_variables[Variable_Counter_2].Var_name:
                                         Rule.sql_condition +=Rule.Body[List_Counter].Non_repeated_perdicate_variables[Variable_Counter].table_alias +" = " + Rule.Body[List_Counter_2].Non_repeated_perdicate_variables[Variable_Counter_2].table_alias  +" and "
                                     Variable_Counter_2+=1
                                 List_Counter_2+=1
                             Variable_Counter+=1
-                List_Counter+=1
+                List_Counter+=1       
+            
         Rule.sql_condition=Rule.sql_condition[:-4]
         return Rule
-
-
- 
-                        
-   
-
-
+    
+  
+        
+  
+  
+  
+  
