@@ -65,22 +65,23 @@ class Evalutor:
 
 
 
-    def get_rule_queries(self,RuleT):
+   def get_rule_queries(self,RuleT):
         for R in self.Rules:
-            if R.Head.Name==RuleT.Head.Name:
-                if not R.IsRecusive:
-                    # R rule contains view query and unifications from queries
-                    R= self.Unification_query_params_rule(R,RuleT.Head)
-                    rows = R.Print_result(self.initClass.DB)
-                    break
+            if R.Head.Name==RuleT.Head.Name and len(R.Head.Slots)==len(RuleT.Head.Slots) :
+                # R rule contains view query and unifications from queries
+                R= self.Unification_query_params_rule(R,RuleT.Head)
+                print("+++++++++++++")
+                print(R.IsRecusive)
+                if not R.IsRecusive:   
+                    R.Print_result(self.initClass.DB)
+                    
                 else:
+                    self.Recursive_Rule_execute(RuleT)
                     v=0
                     print ("No execution ")
-                  #  self.Rules_to_be_executed.append(R)
-                   # for PredicateT in R.Body:
-                    #    if PredicateT.alias=="":
-                     #       ttt=0
-        return rows
+                break      
+                
+                
 
     def Unification_query_params_rule(self ,Rule,QueryAsPred):
         #Get the rule with sql query
@@ -92,14 +93,14 @@ class Evalutor:
             counter+=1
             if s.Value!="" :
                 if Rule.Head.Slots[counter].VariableName!="":
-                    Rule.Where_clause += Rule.Head.Slots[counter].VariableName+"= '" +s.Value+"' and "
-                    visited="T"
-
+                    Rule.Where_clause += Rule.Head.Slots[counter].VariableName+"= " +s.Value+" and "
+                    visited="T"                      
+                    
         if  visited != "" :
-            Rule.Where_clause=Rule.Where_clause[:-4]
-
-        return  Rule
-
+            Rule.Where_clause=Rule.Where_clause[:-4]           
+       
+        return  Rule          
+       
 
 
     def get_result_rows(self):
@@ -199,20 +200,20 @@ class Evalutor:
 
 
 
-    def PrepareRules_check_primary_rules(self):
-        #check primary rules 1- no body   2- all predicate in the body are tables
+        def PrepareRules_check_primary_rules(self):
+        #check primary rules 1- no body   2- all predicate in the body are tables 
         RuleCounter=0;
         while RuleCounter < len(self.Rules):
-            # just Header
+            # just Header  
             if len(self.Rules[RuleCounter].Body) ==0 :
                 Found="F"
                 for i in Maps.tables:
                     if i.name.upper()==self.Rules[RuleCounter].Head.Name.upper():
                         self.Rules[RuleCounter].IsPrimary= True
-                        Found="T"
+                        Found="T" 
                         break;
                 if Found=="F":
-                    self.Rules[RuleCounter].IsPrimary= None
+                    self.Rules[RuleCounter].IsPrimary= None                    
                     #raise Exception ("There is rule without body and the name of Header not existing in the database schema");
             else:
                 BodyCounter=0
@@ -220,16 +221,16 @@ class Evalutor:
                     if any ( self.Rules[RuleCounter].Head.Name in s.Name for s in self.Rules[RuleCounter].Body):
                         self.Rules[RuleCounter].IsPrimary= None
                         self.Rules[RuleCounter].IsRecusive= True
-                        break;
-
+                        break; 
+                    
                     if any ( self.Rules[RuleCounter].Body[BodyCounter].Name in s.name for s in Maps.tables) :
                         self.Rules[RuleCounter].IsPrimary= True
                     else:
                         self.Rules[RuleCounter].IsPrimary= None
-                        break;
+                        break; 
                     BodyCounter+=1
-
-            RuleCounter+=1
+                    
+            RuleCounter+=1    
 
 
     def get_Column_name(self,tableName,index):
@@ -294,8 +295,6 @@ class Evalutor:
                                         self.Rules[RuleCounter].Head.Non_repeated_perdicate_variables.append(perdicate_variableT)
                     slots_Counter+=1
             RuleCounter+=1
-
-
 
 
 
@@ -365,6 +364,8 @@ class Evalutor:
         return Rule
 
 
-
+ 
+                        
+   
 
 
