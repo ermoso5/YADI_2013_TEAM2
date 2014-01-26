@@ -46,8 +46,9 @@ class Database:
     def execute_View(self,View_Query):
         #Connection1 = self.Alchemy_engine.connect()
         #Connection1.execute(View_Query);
+        print(View_Query)
         self.cur.execute (View_Query)
-        
+        print(View_Query)
         
         
 
@@ -67,10 +68,13 @@ class initialization_class:
         database_password=sys.stdin.readline()
         database_password=database_password[:-1]
         #print(database_password)
-        self.DB.DB_name=database_name
-        self.DB.DB_user=database_username
-        self.DB.DB_password=database_password
-        self.DB.loadMap()
+        self.DB_name=database_name
+        self.DB_user=database_username
+        self.DB_password=database_password
+        print(database_name)
+        print(database_username)
+        print(database_password)
+        #self.DB.loadMap()
         print("***  schema initialized successfully")
         
     DB_name=""
@@ -91,4 +95,3 @@ class initialization_class:
         self.DB.DB_user=""
         self.DB.DB_password=""
         self.DB.loadMap()
-
