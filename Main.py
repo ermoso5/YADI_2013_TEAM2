@@ -21,14 +21,15 @@ DatalogParser1= DatalogParser(initClass.path)
 #initClass.Query="reach(A,'G')"
 EC=Evalutor(DatalogParser1,initClass)
 while true:
+    
+    EC.PrepareRules_create_views_for_primary_rules()
+    EC.Execute(initClass.Query)
+    
     print("Please enter the qurey : ")
     initClass.Query=sys.stdin.readline()
     initClass.Query=initClass.Query[:-1]
     if initClass.Query == "-1":
         sys.exit()
-    
-    EC.PrepareRules_create_views_for_primary_rules()
-    EC.Execute(initClass.Query)
     #     student_book_age(A,D,R)    
         
     
