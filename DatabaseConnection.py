@@ -46,9 +46,8 @@ class Database:
     def execute_View(self,View_Query):
         #Connection1 = self.Alchemy_engine.connect()
         #Connection1.execute(View_Query);
-        print(View_Query)
         self.cur.execute (View_Query)
-        print(View_Query)
+        
         
         
 
@@ -67,10 +66,15 @@ class initialization_class:
         print("Please enter the database password : ")
         database_password=sys.stdin.readline()
         database_password=database_password[:-1]
+        
+        print("Please enter the path : ")
+        path=sys.stdin.readline()
+        path=path[:-1]
         #print(database_password)
         self.DB_name=database_name
         self.DB_user=database_username
         self.DB_password=database_password
+        self.path=path
         print(database_name)
         print(database_username)
         print(database_password)
@@ -80,7 +84,8 @@ class initialization_class:
     DB_name=""
     DB_user=""    
     DB_password=""
-        
+    path=""   
+     
     def Connet(self):
         self.DB=Database()
         self.DB.DB_name=self.DB_name
