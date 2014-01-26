@@ -361,11 +361,8 @@ class Evalutor:
                                 List_Counter_2+=1
                             Variable_Counter+=1
                 List_Counter+=1
-
         Rule.sql_condition=Rule.sql_condition[:-4]
         return Rule
-
-
 
 
 
