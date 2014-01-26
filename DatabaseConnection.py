@@ -1,20 +1,20 @@
-import sys
 import psycopg2 as dbapi2
-
+import sys
 from sqlalchemy import *
 from sqlalchemy.engine import reflection
 from MainPKG.Basic_Classes import *
  
 class Database:
-    #engine = create_engine('postgresql://postgres:'+"DMKM"+'@localhost:5432/' +"TinyTwitter"+'') 
+    #engine = create_engine('postgresql://postgres:'+"a111111b"+'@localhost:5432/' +"TinyTwitter"+'') 
     #DB_name="TinyTwitter"
     #DB_user="postgres"
-    #DB_password="DMKM"
+    #DB_password="a111111b"
     DB_name=""
     DB_user=""
     DB_password=""
     Map = Maps()
     engine=null
+    cur=null
     Alchemy_engine=null
     def loadMap(self):
         try:
@@ -24,6 +24,7 @@ class Database:
         except Exception as inst:
             print("Problem during create database engine")
             return
+        self.cur = self.engine.cursor()
         self.Map=Maps()
         Inspector = reflection.Inspector.from_engine(self.Alchemy_engine)
         self.Alchemy_engine.echo = False 
@@ -39,18 +40,15 @@ class Database:
             self.Map.tables.append(tableN)
     
     def Select(self,Query):
-        cur = self.engine.cursor()
-        
-        cur.execute (Query)
-        return cur.fetchall()
+        self.cur.execute (Query)
+        return self.cur.fetchall()
     
     def execute_View(self,View_Query):
-        Connection1 = self.Alchemy_engine.connect()
-        trans = Connection1.begin()
-        print(View_Query)
-        Connection1.execute(View_Query);
-        trans.commit()
-        Connection1.close()
+        #Connection1 = self.Alchemy_engine.connect()
+        #Connection1.execute(View_Query);
+        self.cur.execute (View_Query)
+        
+        
         
 
 class initialization_class:
