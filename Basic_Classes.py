@@ -20,10 +20,6 @@ class Predicate:
         self.Name = ""
         self.Slots = []
         self.IsNegation = False
-    def GetName(self):
-        return self.Name
-    def GetArity(self):
-        return len(self.Slots)
     def print(self):
         print(self.Name+'(', end="")
         for p in self.Slots:
@@ -31,27 +27,28 @@ class Predicate:
         print(')', end="")
 
 class Rule:
-    IsPrimary=None     # means it has no body " R(X,Y,X). " or all body's predicates are tables in Database
+    IsPrimary=None     # means it has no body " R(X,Y,Z). " or all body's predicates are tables in Database       
     IsRecusive=None
-    #parameters related to structure of rule query
+    #parameters related to structure of rule query 
     sql_condition=""
     sql_tables=" "
     View_query=""
     View_name=""
+    Rec_view=""
     #################
-
-    #parameters related to unify the rules with query  ex  Q('AXCV',10)
+    #parameters related to unify the rules with query  ex  Q('AXCV',10) 
     Where_clause=""
     #################
-    Rec_view="" 
-    
     def Print_result(self,DB):
+        print("Hey")
         sql="select * from "+self.View_name
         if self.Where_clause !="":
             sql+=" where "+self.Where_clause 
+        print(sql)
         rows =DB.Select(sql)
         for row in rows :
             print (self.Head.Name+str(row))
+        return rows
           
     def  print2(self):
         R=self
@@ -71,50 +68,28 @@ class Rule:
             
             print("_________________________")
     
-
     def get_Query(self):
         if self.sql_condition=="":
             return self.sql_tables
         else:
             return self.sql_tables +" where "+self.sql_condition
-
+    
     def _init__(self):
         self.Head = Predicate()
         self.Body = []
-    def GetHeadName(self):
-        return self.Head.GetName()
-    def GetRuleArity(self):
-        return len(self.Body)
+        
     def print(self):
         print("Head:", end="")
-        if self.Head is not None:
-            self.Head.print()
+        self.Head.print()
         print("Body:", end="")
         for i in range(0,len(self.Body), 1):
             self.Body[i].print()
 
-class Fact:
-    def __init__(self):
-        self.Name = ""
-        self.Slots = []
-    def GetName(self):
-        return self.Name
-    def GetFactArity(self):
-        return len(self.Slots)
-    def print(self):
-        print(self.Name+'(', end="")
-        for p in self.Slots:
-            print(p.Value + ',' + p.VariableName, end="")
-        print(')', end="")
 
 class Expression:
     def __init__(self):
         self.Literals = []
-    def GetOperation(self):
-        return self.Literals[1]
-    def print(self):
-    #[['X'], '>=', ['2', '+', 'Y']]
-        print(self.Literals)
+
 
 class Maps:
     tables=[]
@@ -138,5 +113,4 @@ class perdicate_variable:
     def __init__(self):
         self.Var_name=""
         self.table_alias = ""
-
 
