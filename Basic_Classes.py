@@ -43,18 +43,34 @@ class Rule:
     #parameters related to unify the rules with query  ex  Q('AXCV',10)
     Where_clause=""
     #################
-
-
+    Rec_view="" 
+    
     def Print_result(self,DB):
         sql="select * from "+self.View_name
         if self.Where_clause !="":
-            sql+=" where "+self.Where_clause
-        print(sql)
+            sql+=" where "+self.Where_clause 
         rows =DB.Select(sql)
-        for row in rows:
+        for row in rows :
             print (self.Head.Name+str(row))
-        return rows
-
+          
+    def  print2(self):
+        R=self
+        print("R.View_name "     + R.View_name)
+        print("R.sql_condition " + R.sql_condition)
+        print("R.sql_tables "    + R.sql_tables)
+        print("R.View_query "    + R.View_query)
+        print("R.Where_clause "  + R.Where_clause)
+        print("R.get_Query "     + R.get_Query())
+        
+        for S in R.Body:
+            print("       " + S.alias)
+            print("_________________________")
+            
+            for E in S.Non_repeated_perdicate_variables:
+                print("       "+E.Var_name+":" +E.table_alias)
+            
+            print("_________________________")
+    
 
     def get_Query(self):
         if self.sql_condition=="":
