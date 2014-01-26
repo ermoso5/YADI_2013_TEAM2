@@ -51,27 +51,21 @@ from MainPKG.DatabaseConnection import *
 
 ######QUTIBA'S TEST
 
+
 initClass=initialization_class()
-#initClass.intiatlize_console()
-
-
-initClass.DB_name="Datalog"
-initClass.DB_user="postgres"
-initClass.DB_password="_password"
+initClass.intiatlize_console()
+#initClass.DB_name="Datalog"
+#initClass.DB_user="postgres"
+#initClass.DB_password="a111111b"
+#path = "C:\\Users\\qutiba\\Desktop\\Rule1.txt"
 initClass.Connet()
-path = "C:/Python33/Rules.txt"
-DatalogParser1= DatalogParser(path)
-
-query="student_book_age(S,F,20)"
+DatalogParser1= DatalogParser(initClass.path)
+#query="student_book_age('student3',F,'20')"
+query="reach(A,'G')"
 #try:
 EC=Evalutor(DatalogParser1,initClass)
 #query="student_book(D,V)"
 EC.Execute(query)
-
-print("4")
-
-for r in EC.Rules:
-    print(r.View_name)
-    print("----------- "+str(r.IsRecusive))
+#EC.Drop_created_views()
 
 
