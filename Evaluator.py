@@ -36,7 +36,17 @@ class Evalutor:
        
                 
     
-   
+    def Drop_created_views(self):
+        counter=len(self.Views_list)
+        while counter>0 :
+            v="drop view "+self.Views_list[counter-1] +" RESTRICT  ;"
+            counter-=1
+            print(v+"++++++++++")
+            try:
+                self.initClass.DB.execute_View(v)
+            except:
+                v=0
+            
        
     
     
@@ -102,25 +112,15 @@ class Evalutor:
             sql+=" (select "+cols+" from "+R.get_Query() +") union"
         sql=sql[:-5]
         sql+=") "
-        
-        print(" " + sql)
+              
         #create temp table for rec rule
         self.initClass.DB.execute_View(sql)
-        
-        
+                
         Rec_Rule = self.EvaluteRule(Rec_Rule)
-        Rec_Rule.print2()
-        
+                
         Rec_view="V_"+Rec_Rule.View_name
         Rec_Rule.Rec_view=Rec_view
-        
-        
-        for i in self.Rules[rule_counter].Head.Non_repeated_perdicate_variables:
-            print(i.table_alias)
-        
-        
-        
-        
+          
         view="create or replace TEMPORARY  view "+Rec_view+" as ( select  "
                    
         
@@ -136,7 +136,7 @@ class Evalutor:
                     view += " \' \' as \""+ slotz.VariableName+"\" ,"
         view =view [:-1]
         view += " from " + self.Rules[rule_counter].get_Query()+" )"
-        print(" " + view)
+        
         self.initClass.DB.execute_View(view)
         self.Rules[rule_counter].View_query=view            
                
@@ -152,21 +152,26 @@ class Evalutor:
             else:
                 Count = len (rows)
        
+              
+                
+                
+                
+                
+                
         
     def get_rule_queries(self,RuleT):
         for R in self.Rules:
             if R.Head.Name==RuleT.Head.Name and len(R.Head.Slots)==len(RuleT.Head.Slots) :
                 # R rule contains view query and unifications from queries
                 R= self.Unification_query_params_rule(R,RuleT.Head)
-                print("+++++++++++++")
-                print(R.IsRecusive)
+                
                 if not R.IsRecusive:   
                     R.Print_result(self.initClass.DB)
                     
                 else:
                     self.Recursive_Rule_execute(RuleT)
-                    v=0
-                    print ("No execution ")
+                    
+                    
                 break      
                         
     def Unification_query_params_rule(self ,Rule,QueryAsPred):
