@@ -1,0 +1,6 @@
+student_age(N,Y):-student(X,N),age(X,Y).
+student_book(N,Z):-student(X,N),std_book(W,X,Y),book(Y,Z).
+student_book_age(S,B):- student_book(S,B).
+student_book_age(S,B,A):- student_book(S,B),student_age(S,A).
+reach(S,A):-links(S,Z),reach(Z,A).
+reach(S,A):-links(S,A).
