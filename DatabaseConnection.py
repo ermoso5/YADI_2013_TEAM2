@@ -1,14 +1,15 @@
-import psycopg2 as dbapi2
 import sys
+import psycopg2 as dbapi2
+
 from sqlalchemy import *
 from sqlalchemy.engine import reflection
 from MainPKG.Basic_Classes import *
  
 class Database:
-    #engine = create_engine('postgresql://postgres:'+"a111111b"+'@localhost:5432/' +"TinyTwitter"+'') 
+    #engine = create_engine('postgresql://postgres:'+"DMKM"+'@localhost:5432/' +"TinyTwitter"+'') 
     #DB_name="TinyTwitter"
     #DB_user="postgres"
-    #DB_password="a111111b"
+    #DB_password="DMKM"
     DB_name=""
     DB_user=""
     DB_password=""
