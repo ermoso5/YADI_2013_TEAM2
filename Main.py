@@ -11,14 +11,14 @@ from MainPKG.DatabaseConnection import *
 
 
 initClass=initialization_class()
-#initClass.intiatlize_console()
-initClass.DB_name="Datalog"
-initClass.DB_user="postgres"
-initClass.DB_password="a111111b"
-initClass.path = "C:\\Users\\qutiba\\Desktop\\Rule1.txt"
+initClass.intiatlize_console()
+#initClass.DB_name="Datalog"
+#initClass.DB_user="postgres"
+#initClass.DB_password="a111111b"
+#initClass.path = "C:\\Users\\qutiba\\Desktop\\Rule1.txt"
 initClass.Connet()
 DatalogParser1= DatalogParser(initClass.path)
-initClass.Query="reach(A,'G')"
+#initClass.Query="reach(A,'G')"
 EC=Evalutor(DatalogParser1,initClass)
 while true:
     print("Please enter the qurey : ")
