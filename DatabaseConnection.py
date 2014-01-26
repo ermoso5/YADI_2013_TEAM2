@@ -91,3 +91,4 @@ class initialization_class:
         self.DB.DB_user=""
         self.DB.DB_password=""
         self.DB.loadMap()
+
