@@ -139,3 +139,4 @@ class perdicate_variable:
         self.Var_name=""
         self.table_alias = ""
 
+
