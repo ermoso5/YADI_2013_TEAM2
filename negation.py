@@ -1,0 +1,1 @@
+# negation class goes here
