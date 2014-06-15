@@ -1,5 +1,3 @@
-YADI_2013_TEAM2
-===============
 YADI - Yet Another Datalog Interpreter
 ================================================
                                         
